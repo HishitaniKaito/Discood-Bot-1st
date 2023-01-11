@@ -1,42 +1,62 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Discood_Bot_1st
 {
-    public class Program
+    class Program
     {
-        public static Task Main(string[] args) => new Program().MainAsync();
+        private readonly DiscordSocketClient _client;
+        static void Main(string[] arga)
+        {
+            new Program().MainAsync().GetAwaiter().GetResult();
+        }
 
-        private DiscordSocketClient _client;
-        
-        public async Task MainAsync()
+        public Program()
         {
             _client = new DiscordSocketClient();
-
             _client.Log += Log;
-
-            //  You can assign your bot token to a string, and pass that in to connect.
-            //  This is, however, insecure, particularly if you plan to have your code hosted in a public repository.
-            //tokenは世界にさらすわけには行けないので
+            _client.Ready += onReady;
+            _client.MessageReceived += onMessage;
+        }
+        public async Task MainAsync()
+        {
+            //tokenはさらすわけには行けないので
             var token = "";
-
-            // Some alternative options would be to keep your token in an Environment Variable or a standalone file.
-            // var token = Environment.GetEnvironmentVariable("NameOfYourEnvironmentVariable");
-            // var token = File.ReadAllText("token.txt");
-            // var token = JsonConvert.DeserializeObject<AConfigurationClass>(File.ReadAllText("config.json")).Token;
 
             await _client.LoginAsync(TokenType.Bot, token);
             await _client.StartAsync();
 
             // Block this task until the program is closed.
-            await Task.Delay(-1);
+            await Task.Delay(Timeout.Infinite);
+        }
+        private Task onReady()
+        {
+            Console.WriteLine($"{_client.CurrentUser} is Running!!");
+            return Task.CompletedTask;
         }
         private Task Log(LogMessage msg)
         {
             Console.WriteLine(msg.ToString());
             return Task.CompletedTask;
+        }
+        private async Task onMessage(SocketMessage message)
+        {
+            if (message.Author.Id == _client.CurrentUser.Id)
+            {
+                return;
+            }
+            if (message.Content == "aaaaa")
+            {
+                await message.Channel.SendMessageAsync("こんにちは！");
+            }
+            if (message.Content == "何時")
+            {
+                DateTime dt = DateTime.Now;
+                await message.Channel.SendMessageAsync("今の時刻は" + dt.ToString("hh:mm"));
+            }
         }
     }
 }
